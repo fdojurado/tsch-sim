@@ -59,13 +59,15 @@ import process from 'process';
 import * as scheduler_orchestra from './scheduler_orchestra.mjs';
 import * as scheduler_6tisch_min from './scheduler_6tisch_min.mjs';
 import * as scheduler_lf from './scheduler_lf.mjs';
-const schedulers = [scheduler_orchestra, scheduler_6tisch_min, scheduler_lf];
+import * as scheduler_elise from './scheduler_elise.mjs';
+const schedulers = [scheduler_orchestra, scheduler_6tisch_min, scheduler_lf, scheduler_elise];
 
 /* Add any new routing implementations here */
 import * as rpl from './routing_rpl.mjs';
 import * as nullrouting from './routing_null.mjs';
 import * as lfrouting from './routing_lf.mjs';
-const routing_implementations = [rpl, nullrouting, lfrouting];
+import * as eliserouting from './routing_elise.mjs';
+const routing_implementations = [rpl, nullrouting, lfrouting, eliserouting];
 
 /* ------------------------------------- */
 

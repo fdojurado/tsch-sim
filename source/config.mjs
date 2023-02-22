@@ -123,7 +123,7 @@ const default_config = {
     /* Scheduling */
     /* ------------------------------------- */
 
-    /* Scheduling algorithm. Available: "Orchestra", "6tischMin", "LeafAndForwarder" */
+    /* Scheduling algorithm. Available: "Orchestra", "6tischMin", "LeafAndForwarder", "Elise" */
     SCHEDULING_ALGORITHM: "Orchestra",
 
     /* Note: the schedule size is given for each scheduling option separately:
@@ -191,7 +191,7 @@ const default_config = {
     /* IP packet reassembly maximal time */
     IP_REASSEMBLY_TIMEOUT_SEC: 8,
 
-    /* Routing algorithm. Available: "RPL", "LeafAndForwarderRouting", "NullRouting" */
+    /* Routing algorithm. Available: "RPL", "LeafAndForwarderRouting", "NullRouting", "EliseRouting" */
     ROUTING_ALGORITHM: "RPL",
     /* Is this node a leaf in the routing tree (does not forward packets)? */
     ROUTING_IS_LEAF: false,
