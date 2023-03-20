@@ -67,6 +67,7 @@ export class Packet {
         this.source = source; /* end-to-end: originator */
         this.destination_id = destination_id; /* end-to-end: destination */
         this.length = length;
+        this.join_priority = source.join_priority;
         this.seqnum = -1; /* end-to-end sequence number */
         this.link_layer_seqnum = -1; /* link layer sequence number */
         this.packetbuf = {}; /* attributes for TSCH and other protocol layers */

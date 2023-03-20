@@ -73,8 +73,7 @@ const routing_implementations = [rpl, nullrouting, lfrouting, eliserouting];
 
 const PERIODIC_TIMER_SEC = 60;
 
-function periodic_bookeeping(user_param, seconds)
-{
+function periodic_bookeeping(user_param, seconds) {
     /* print time and simulation progress periodically */
     const progress = 100 * seconds / config.SIMULATION_DURATION_SEC;
     log.log(log.INFO, null, "Main", `${Math.trunc(seconds)} seconds, progress ${progress.toFixed(2)}%`);
@@ -92,8 +91,7 @@ function periodic_bookeeping(user_param, seconds)
  * If the config is found to be invalid/inconsistent,
  * this function attempts to changes the config to fix that.
  */
-function check_config_validity()
-{
+function check_config_validity() {
     if (config.APP_PACKETS_GENERATE_ALWAYS && config.EMULATE_6TISCHSIM) {
         log.log(log.WARNING, null, "Main", `options config.APP_PACKETS_GENERATE_ALWAYS and config.EMULATE_6TISCHSIM are incompatible, ignoring the former`);
         config.APP_PACKETS_GENERATE_ALWAYS = false;
@@ -116,15 +114,13 @@ function check_config_validity()
     }
 }
 
-function check_node_validity(node)
-{
+function check_node_validity(node) {
     if (node.links.size === 0 && !config.TRACE_FILE) {
         log.log(log.WARNING, null, "Main", `node ${node.id} of type "${node.config.NAME}" has no valid connections`);
     }
 }
 
-function check_node_type_validity(node_type)
-{
+function check_node_type_validity(node_type) {
     if (!node_type.NAME) {
         return false;
     }
@@ -134,16 +130,14 @@ function check_node_type_validity(node_type)
     return true;
 }
 
-function is_valid_node_id(network, node_id)
-{
+function is_valid_node_id(network, node_id) {
     return network.nodes.has(node_id);
 }
 
 
 /* ------------------------------------- */
 
-function parse_position(network, position)
-{
+function parse_position(network, position) {
     const node_id = position.ID;
     if (is_valid_node_id(network, node_id)) {
         const node = network.get_node(node_id);
@@ -168,8 +162,7 @@ function parse_position(network, position)
 
 /* ------------------------------------- */
 
-function find_plugin(plugins, name)
-{
+function find_plugin(plugins, name) {
     for (const plugin of plugins) {
         if (plugin.plugin_name === name) {
             return plugin;
@@ -180,8 +173,7 @@ function find_plugin(plugins, name)
 
 /* ------------------------------------- */
 
-export function construct_simulation(is_from_web)
-{
+export function construct_simulation(is_from_web) {
     /* init time first */
     time.reset_time();
     time.add_timer(PERIODIC_TIMER_SEC, true, null, periodic_bookeeping);
@@ -382,8 +374,8 @@ export function construct_simulation(is_from_web)
                         /* generate packets only if the source is distinct from the destination */
                         if (from_node_id !== to_node_id) {
                             new ps.PacketSource(net.get_node(from_node_id),
-                                                net.get_node(to_node_id),
-                                                data);
+                                net.get_node(to_node_id),
+                                data);
                         }
                     }
                 }
@@ -394,8 +386,8 @@ export function construct_simulation(is_from_web)
                         /* generate packets only if the source is distinct from the destination */
                         if (from_node_id !== to_node_id) {
                             new ps.PacketSource(net.get_node(from_node_id),
-                                                to_node_id === -1 ? null : net.get_node(to_node_id),
-                                                data);
+                                to_node_id === -1 ? null : net.get_node(to_node_id),
+                                data);
                         }
                     }
                 } else {
@@ -540,11 +532,10 @@ export function construct_simulation(is_from_web)
     return net;
 }
 
-function start_simulation(network)
-{
+function start_simulation(network) {
     state.is_running = true;
     state.is_reset_requested = false;
-    log.log(log.INFO, null, "Main", `starting simulation main loop...`);
+    log.log(log.INFO, null, "Main", `starting simulation main loop...${network.nodes.size}`);
 
     /* initialize all nodes */
     for (let [_, node] of network.nodes) {
@@ -552,8 +543,7 @@ function start_simulation(network)
     }
 }
 
-function finish_simulation(network)
-{
+function finish_simulation(network) {
     log.log(log.INFO, null, "Main", `ending simulation at ${time.timeline.seconds.toFixed(3)} seconds`);
     /* get stats */
     const stats = network.aggregate_stats();
@@ -600,8 +590,7 @@ function finish_simulation(network)
 }
 
 /* run a single simulation taking the network configuration as the input */
-export function run_simulation(network)
-{
+export function run_simulation(network) {
     state.is_interactive = false;
 
     start_simulation(network);
@@ -630,8 +619,7 @@ export function run_simulation(network)
 }
 
 /* run a looping function waiting for commands and execute (parts of) simulations on request */
-export async function run_interactive()
-{
+export async function run_interactive() {
     state.is_interactive = true;
 
     while (true) {
@@ -708,40 +696,40 @@ export async function run_interactive()
 
                 /* have we reached a pause condition? */
                 switch (state.simulation_speed) {
-                case constants.RUN_UNLIMITED:
-                default:
-                {
-                    const real_world_seconds = process.uptime() - start_real_seconds;
-                    if (real_world_seconds > 1.0) {
-                        /* interrupt this inner loop once per second to react to new commands */
-                        state.is_interrupt_requested = true;
-                    }
-                }
-                    break;
-                case constants.RUN_1000_PERCENT:
-                case constants.RUN_100_PERCENT:
-                case constants.RUN_10_PERCENT:
-                {
-                    const real_world_seconds = process.uptime() - start_real_seconds;
-                    const simulated_seconds = time.timeline.seconds - start_simulated_seconds;
-                    const coeff = state.simulation_speed === constants.RUN_10_PERCENT ? 10.0
-                          : (state.simulation_speed === constants.RUN_100_PERCENT ? 1.0 : 0.1);
-                    let delta = coeff * simulated_seconds - real_world_seconds;
-                    if (delta >= 0.001) {
-                        /* do not allow to sleep for too long and become completely unresponsive */
-                        delta = Math.min(delta, 10.0);
-                        await utils.sleep(delta * 1000);
-                    }
-                }
-                    break;
-                case constants.RUN_STEP_NEXT_ACTIVE:
-                    if (step.was_active_slot) {
+                    case constants.RUN_UNLIMITED:
+                    default:
+                        {
+                            const real_world_seconds = process.uptime() - start_real_seconds;
+                            if (real_world_seconds > 1.0) {
+                                /* interrupt this inner loop once per second to react to new commands */
+                                state.is_interrupt_requested = true;
+                            }
+                        }
+                        break;
+                    case constants.RUN_1000_PERCENT:
+                    case constants.RUN_100_PERCENT:
+                    case constants.RUN_10_PERCENT:
+                        {
+                            const real_world_seconds = process.uptime() - start_real_seconds;
+                            const simulated_seconds = time.timeline.seconds - start_simulated_seconds;
+                            const coeff = state.simulation_speed === constants.RUN_10_PERCENT ? 10.0
+                                : (state.simulation_speed === constants.RUN_100_PERCENT ? 1.0 : 0.1);
+                            let delta = coeff * simulated_seconds - real_world_seconds;
+                            if (delta >= 0.001) {
+                                /* do not allow to sleep for too long and become completely unresponsive */
+                                delta = Math.min(delta, 10.0);
+                                await utils.sleep(delta * 1000);
+                            }
+                        }
+                        break;
+                    case constants.RUN_STEP_NEXT_ACTIVE:
+                        if (step.was_active_slot) {
+                            state.is_running = false;
+                        }
+                        break;
+                    case constants.RUN_STEP_SINGLE:
                         state.is_running = false;
-                    }
-                    break;
-                case constants.RUN_STEP_SINGLE:
-                    state.is_running = false;
-                    break;
+                        break;
                 }
             }
 
@@ -770,25 +758,21 @@ export async function run_interactive()
     }
 }
 
-export function has_simulation_ended()
-{
+export function has_simulation_ended() {
     const end_time_sec = config.SIMULATION_DURATION_SEC + 0.000001;
     return time.timeline.get_next_seconds() > end_time_sec;
 }
 
-export function run_single()
-{
+export function run_single() {
     let network = construct_simulation(false);
     run_simulation(network);
 }
 
-export function get_nodes()
-{
+export function get_nodes() {
     return state.network.nodes;
 }
 
-export function get_status()
-{
+export function get_status() {
     status.simulator.is_running = state.is_running;
     status.simulator.asn = state.timeline ? state.timeline.asn : 0;
     status.simulator.seconds = state.timeline ? state.timeline.seconds : 0;
@@ -797,9 +781,11 @@ export function get_status()
     if (state.network) {
         /* save the nodes positions */
         for (const [id, node] of state.network.nodes) {
-            status.network.nodes.push({id,
-                                       x: node.pos_x,
-                                       y: node.pos_y});
+            status.network.nodes.push({
+                id,
+                x: node.pos_x,
+                y: node.pos_y
+            });
         }
         /* save the link qualities */
         for (let [link_key, link] of state.network.links) {
@@ -817,8 +803,7 @@ export function get_status()
     return status;
 }
 
-export function update_node_positions(node_positions)
-{
+export function update_node_positions(node_positions) {
     state.node_positions = JSON.parse(JSON.stringify(node_positions));
 
     if (!state.network) {

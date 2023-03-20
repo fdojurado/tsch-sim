@@ -36,8 +36,10 @@
 import constants from './constants.mjs';
 import config from './config.mjs';
 import * as pkt from './packet.mjs';
-import { dbm_to_mw, mw_to_dbm, assert, id_to_addr, get_hopseq,
-         div_safe, round_to_ms, exceeds_limit } from './utils.mjs';
+import {
+    dbm_to_mw, mw_to_dbm, assert, id_to_addr, get_hopseq,
+    div_safe, round_to_ms, exceeds_limit
+} from './utils.mjs';
 import { rng } from './random.mjs';
 import * as log from './log.mjs';
 import * as time from './time.mjs';
@@ -51,9 +53,9 @@ import * as ca from './collision_analyzer.mjs';
 /* ------------------------------------- */
 
 export const SCHEDULE_DECISION_SLEEP = 0;
-export const SCHEDULE_DECISION_TX    = 1;
-export const SCHEDULE_DECISION_RX    = 2;
-export const SCHEDULE_DECISION_SCAN  = 3;
+export const SCHEDULE_DECISION_TX = 1;
+export const SCHEDULE_DECISION_RX = 2;
+export const SCHEDULE_DECISION_SCAN = 3;
 
 const NUM_RECENT_LINK_LAYER_SEQNUMS = 16;
 
@@ -80,7 +82,7 @@ export class Node {
         if (this.id < 1000) {
             this.sid += ' ';
         }
-        assert(typeof(id) === "number", "node ID must be a number", this);
+        assert(typeof (id) === "number", "node ID must be a number", this);
         assert(Math.round(id) === id, "node ID must be an integer", this);
         assert(id > 0, "node ID must be positive", this);
         this.addr = id_to_addr(id);
@@ -337,14 +339,14 @@ export class Node {
             delay = Infinity;
         }
 
-        this.eb_timer = time.add_timer(delay, false, this, function(node) { node.eb_timer_callback(); });
+        this.eb_timer = time.add_timer(delay, false, this, function (node) { node.eb_timer_callback(); });
     }
 
     /* Check whether the EB timer should be started/stopped. Called when node's state is updated */
     check_eb_timer() {
         const do_fire = this.has_joined && this.current_eb_period >= 0;
         if (do_fire && !this.eb_timer) {
-            this.eb_timer = time.add_timer(this.is_coordinator ? 0 : rng.uniform(0, this.config.MAC_EB_PERIOD_SEC), false, this, function(node) { node.eb_timer_callback(); });
+            this.eb_timer = time.add_timer(this.is_coordinator ? 0 : rng.uniform(0, this.config.MAC_EB_PERIOD_SEC), false, this, function (node) { node.eb_timer_callback(); });
         } else if (!do_fire && this.eb_timer) {
             time.remove_timer(this.eb_timer);
             this.eb_timer = null;
@@ -368,14 +370,14 @@ export class Node {
             time.remove_timer(this.keepalive_timer);
         }
         if (keepalive_timeout) {
-            this.keepalive_timer = time.add_timer(keepalive_timeout, false, this, function(node) { node.keepalive_timer_cb(); });
+            this.keepalive_timer = time.add_timer(keepalive_timeout, false, this, function (node) { node.keepalive_timer_cb(); });
         }
         /* reset desynchronization timer */
         if (this.leave_timer) {
             time.remove_timer(this.leave_timer);
         }
         if (desynchronization_timeout) {
-            this.leave_timer = time.add_timer(desynchronization_timeout, false, this, function(node) {
+            this.leave_timer = time.add_timer(desynchronization_timeout, false, this, function (node) {
                 node.leave_network();
             });
         }
@@ -390,7 +392,7 @@ export class Node {
             /* add an empty packet (only headers, no payload) */
             const packet = new pkt.Packet(this, this.current_time_source.id, this.config.MAC_HEADER_SIZE, true);
             packet.packet_protocol = constants.PROTO_TSCH;
-            packet.sent_callback = function(packet, is_success) {
+            packet.sent_callback = function (packet, is_success) {
                 packet.source.keepalive_packet_sent(packet, is_success);
             }
             this.add_packet(packet);
@@ -398,7 +400,7 @@ export class Node {
 
         /* schedule the new one immediately, without waiting for sending to complete */
         if (this.config.MAC_KEEPALIVE_TIMEOUT_SEC) {
-            this.keepalive_timer = time.add_timer(this.config.MAC_KEEPALIVE_TIMEOUT_SEC, false, this, function(node) {
+            this.keepalive_timer = time.add_timer(this.config.MAC_KEEPALIVE_TIMEOUT_SEC, false, this, function (node) {
                 node.keepalive_timer_cb();
             });
         }
@@ -432,7 +434,7 @@ export class Node {
             this.log(log.INFO, `scanning on channel=${this.join_hopseq[channel_offset]}...`);
             this.scanning_rx_cell = new sf.Cell(0, channel_offset, this, constants.CELL_OPTION_RX);
         }
-        this.scanning_timer = time.add_timer(period, false, this, function(node) { node.scanning_timer_cb(); });
+        this.scanning_timer = time.add_timer(period, false, this, function (node) { node.scanning_timer_cb(); });
     }
 
     ensure_neighbor(neighbor_id) {
@@ -548,7 +550,7 @@ export class Node {
         for (const [id, neighbor] of this.neighbors) {
             if (neighbor.backoff_window !== 0 /* Is the queue in backoff state? */
                 && ((neighbor.tx_cells_count === 0 && is_broadcast)
-                   || (neighbor.tx_cells_count > 0 && cell.neighbor_id === id))) {
+                    || (neighbor.tx_cells_count > 0 && cell.neighbor_id === id))) {
                 neighbor.backoff_window--;
             }
         }
@@ -851,7 +853,7 @@ export class Node {
             log.log(log.INFO, this, "Main", `packet reassembly started, seqnum=${packet.seqnum} from=${packet.source.id}`);
             reassembly_info = {};
             reassembly_info[packet.fragment_info.number] = packet;
-            reassembly_info.timer = time.add_timer(this.config.IP_REASSEMBLY_TIMEOUT_SEC, false, this, function(node) { node.reassembly_timeout(key); });
+            reassembly_info.timer = time.add_timer(this.config.IP_REASSEMBLY_TIMEOUT_SEC, false, this, function (node) { node.reassembly_timeout(key); });
             this.fragments_pending[key] = reassembly_info;
         } else {
             /* add to existing reassembly info and check if completed */
@@ -1035,7 +1037,7 @@ export class Node {
         schedule_status[this.index].l = packet.length;
 
         if (packet.packetbuf.PACKETBUF_ATTR_FRAME_TYPE === constants.FRAME802154_BEACONFRAME) {
-            log.log(log.DEBUG, this, "TSCH", `rx EB from ${packet.lasthop_id}`);
+            log.log(log.DEBUG, this, "TSCH", `rx EB from ${packet.lasthop_id} and join priority ${packet.join_priority}`);
             this.rx_eb(packet);
             return true;
         }
@@ -1250,9 +1252,9 @@ export class Node {
             const timeslot = time.timeline.asn % s.size;
             for (const cell of s.cells) {
                 const time_to_timeslot =
-                      cell.timeslot >= timeslot ?
-                      cell.timeslot - timeslot :
-                      s.size + cell.timeslot - timeslot;
+                    cell.timeslot >= timeslot ?
+                        cell.timeslot - timeslot :
+                        s.size + cell.timeslot - timeslot;
                 if (time_to_timeslot < best_time_to_timeslot) {
                     best_time_to_timeslot = time_to_timeslot;
                 }
@@ -1440,8 +1442,8 @@ export class Node {
         const channel_rx = dst.get_channel(dst.selected_cell.channel_offset);
         const link_to = this.links.get(dst.id);
         const can_receive = link_to
-              && (dst.selected_cell.options & constants.CELL_OPTION_RX)
-              && channel_tx === channel_rx;
+            && (dst.selected_cell.options & constants.CELL_OPTION_RX)
+            && channel_tx === channel_rx;
         if (can_receive) {
             /* successfully Tx'ed at the link layer? */
             const send_success = link_to.try_send(channel_tx);
@@ -1461,7 +1463,7 @@ export class Node {
                 dst.rx_failed_packets[this.tx_packet.subslot].push(this.tx_packet);
                 this.stats_mac_rx_error += 1;
             }
-            transmissions.push({from: this.id, to: dst.id, ok: send_success});
+            transmissions.push({ from: this.id, to: dst.id, ok: send_success });
         } else {
             /* this.log(log.DEBUG, `  commit_tx_to ${dst.id}: wrong channel tx=${schedule_status[this.index].co}/${channel_tx} rx=${dst.selected_cell.channel_offset}/${channel_rx}`); */
         }
@@ -1550,7 +1552,7 @@ export class Node {
                     second_best_packet = best_packet;
                     best_packet = packet;
                 } else if (second_best_packet == null
-                           || packet.rx_info[this.id].rssi > second_best_packet.rx_info[this.id].rssi) {
+                    || packet.rx_info[this.id].rssi > second_best_packet.rx_info[this.id].rssi) {
                     second_best_packet = packet;
                 }
             }
@@ -1676,7 +1678,7 @@ export class Node {
         if (do_remove) {
             if (packet.is_ack_required) {
                 this.log(log.INFO, `tx done to=${packet.nexthop_id} numtx=${packet.num_transmissions} acked=${status_ok}, remove packet`);
-             }
+            }
             /* update the neighbor, as the Tx of this packet is done */
             this.packet_sent(packet, neighbor, status_ok, this.selected_cell);
             /* remove the first packet from the queue */
@@ -1748,10 +1750,10 @@ export class Node {
         const pretty_radio_duty_cycle = parseFloat((100.0 * duty_cycle.total).toFixed(3));
         const pretty_radio_duty_cycle_joined = parseFloat((100.0 * (duty_cycle.total - duty_cycle.scanning)).toFixed(3));
         const app_num_lost = this.stats_app_num_queue_drops
-              + this.stats_app_num_tx_limit_drops
-              + this.stats_app_num_routing_drops
-              + this.stats_app_num_scheduling_drops
-              + this.stats_app_num_other_drops;
+            + this.stats_app_num_tx_limit_drops
+            + this.stats_app_num_routing_drops
+            + this.stats_app_num_scheduling_drops
+            + this.stats_app_num_other_drops;
         return {
             app_num_tx: this.stats_app_num_tx,
             app_num_replied: this.stats_app_num_replied,
@@ -1816,8 +1818,7 @@ export class Node {
     }
 }
 
-export function periodic_process()
-{
+export function periodic_process() {
     for (const [_, node] of simulator.get_nodes()) {
         /* process routing */
         node.routing.on_periodic_timer();
